@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="STRATA">
+  <rect width="512" height="512" fill="#0b0e10"/>
+  <rect x="24" y="24" width="464" height="464" fill="none" stroke="#3b464d" stroke-width="4"/>
+  <g>
+    <rect x="112" y="112" width="136" height="136" fill="#4f9dd6"/>
+    <rect x="264" y="112" width="136" height="136" fill="#a45fad"/>
+    <rect x="112" y="264" width="136" height="136" fill="#d9862f"/>
+    <rect x="264" y="264" width="136" height="136" fill="#c9584a"/>
+  </g>
+  <g fill="#0b0e10">
+    <path d="M112 112h40l-40 40z"/>
+    <path d="M264 112h40l-40 40z"/>
+    <path d="M112 264h40l-40 40z"/>
+    <path d="M264 264h40l-40 40z"/>
+  </g>
+  <g fill="rgba(255,255,255,0.22)">
+    <rect x="112" y="112" width="136" height="10"/>
+    <rect x="264" y="112" width="136" height="10"/>
+    <rect x="112" y="264" width="136" height="10"/>
+    <rect x="264" y="264" width="136" height="10"/>
+  </g>
+</svg>

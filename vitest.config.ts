@@ -1,6 +1,11 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  define: {
+    // The app build injects these; tests run the same sources, so they get stable stand-ins.
+    __BUILD_VERSION__: JSON.stringify('test'),
+    __PRECACHE_MANIFEST__: JSON.stringify(['./']),
+  },
   test: {
     include: [
       'src/**/*.test.ts',

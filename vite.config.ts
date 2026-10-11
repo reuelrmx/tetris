@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { defineConfig } from 'vite';
 
 /**
@@ -12,8 +13,17 @@ import { defineConfig } from 'vite';
  *     same-origin proxy. That means the browser only ever sees relative URLs,
  *     which keeps the live-preview host and production deployments equivalent.
  */
+const buildVersion = createHash('sha256')
+  .update(`${Date.now()}`)
+  .digest('hex')
+  .slice(0, 8);
+
 export default defineConfig({
   base: './',
+  define: {
+    // Shown in the status bar so a player can tell which build they are on.
+    __BUILD_VERSION__: JSON.stringify(buildVersion),
+  },
   build: {
     target: 'es2022',
     outDir: 'dist',

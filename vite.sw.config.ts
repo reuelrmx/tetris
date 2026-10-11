@@ -51,7 +51,7 @@ export default defineConfig({
     outDir: 'dist',
     // The app build already populated dist/ - never wipe it here.
     emptyOutDir: false,
-    minify: 'esbuild',
+    minify: true,
     // A classic script keeps the worker working on browsers without module
     // service-worker support (Firefox at the time of writing).
     lib: {
