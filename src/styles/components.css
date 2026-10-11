@@ -1,0 +1,356 @@
+/* Buttons, fields, panels, tables: the small set of controls the interface is built from. */
+
+/* ---------------------------------------------------------------- buttons */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 2.25rem;
+  padding: 0 var(--space-4);
+  background: var(--ink-raised);
+  border: var(--border-strong);
+  border-radius: var(--radius);
+  color: var(--bone);
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+.btn:hover:not(:disabled) {
+  background: #1e262b;
+  border-color: var(--bone-faint);
+}
+
+.btn:active:not(:disabled) {
+  background: #232c31;
+}
+
+.btn:disabled {
+  color: var(--bone-faint);
+  border-color: var(--line);
+  cursor: not-allowed;
+}
+
+.btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: #d88435;
+  border-color: #d88435;
+  color: var(--accent-ink);
+}
+
+.btn--danger {
+  border-color: var(--danger);
+  color: var(--bone);
+}
+
+.btn--danger:hover:not(:disabled) {
+  background: #2a1a18;
+}
+
+.btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--bone-dim);
+  min-height: 2rem;
+  padding: 0 var(--space-2);
+}
+
+.btn--ghost:hover:not(:disabled) {
+  background: transparent;
+  border-color: transparent;
+  color: var(--bone);
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-underline-offset: 3px;
+}
+
+.btn--wide {
+  width: 100%;
+}
+
+.btn--lg {
+  min-height: 2.75rem;
+  font-size: var(--step-0);
+  padding: 0 var(--space-5);
+}
+
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* ---------------------------------------------------------------- fields */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.field__label {
+  color: var(--bone-dim);
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+select,
+input[type='text'],
+input[type='number'] {
+  min-height: 2.25rem;
+  padding: 0 var(--space-2);
+  background: var(--ink);
+  border: var(--border-strong);
+  border-radius: var(--radius);
+  color: var(--bone);
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+}
+
+select:focus-visible,
+input:focus-visible {
+  border-color: var(--accent);
+}
+
+/* Toggle: a square slab, not a pill. */
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+.toggle input {
+  appearance: none;
+  width: 1.1rem;
+  height: 1.1rem;
+  margin: 0;
+  background: var(--ink);
+  border: var(--border-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+  display: grid;
+  place-content: center;
+}
+
+.toggle input::after {
+  content: '';
+  width: 0.55rem;
+  height: 0.55rem;
+  background: var(--accent);
+  clip-path: polygon(0 0, 100% 0, 100% 68%, 68% 100%, 0 100%);
+  transform: scale(0);
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.toggle input:checked::after {
+  transform: scale(1);
+}
+
+/* Range: thin track, square thumb. */
+input[type='range'] {
+  appearance: none;
+  width: 100%;
+  height: 1.25rem;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type='range']::-webkit-slider-runnable-track {
+  height: 2px;
+  background: var(--line-strong);
+}
+
+input[type='range']::-webkit-slider-thumb {
+  appearance: none;
+  width: 0.75rem;
+  height: 1.1rem;
+  margin-top: -0.47rem;
+  background: var(--accent);
+  border: none;
+  border-radius: 1px;
+}
+
+input[type='range']::-moz-range-track {
+  height: 2px;
+  background: var(--line-strong);
+}
+
+input[type='range']::-moz-range-thumb {
+  width: 0.75rem;
+  height: 1.1rem;
+  background: var(--accent);
+  border: none;
+  border-radius: 1px;
+}
+
+/* ---------------------------------------------------------------- panels */
+
+.panel {
+  background: var(--ink);
+  border: var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}
+
+.panel--flush {
+  padding: 0;
+}
+
+.panel__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: var(--border);
+  margin-bottom: var(--space-3);
+}
+
+.panel__title {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--bone-dim);
+}
+
+/* Key/value readouts. */
+.readout {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-1) 0;
+  font-size: var(--step--1);
+}
+
+.readout + .readout {
+  border-top: 1px solid #1e262b;
+}
+
+.readout__label {
+  color: var(--bone-faint);
+  letter-spacing: 0.04em;
+}
+
+.readout__value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.readout__value--accent {
+  color: var(--accent);
+}
+
+.readout__value--big {
+  font-size: var(--step-1);
+}
+
+/* Data table for records and match results. */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--step--1);
+}
+
+.table th,
+.table td {
+  padding: var(--space-2) var(--space-2);
+  text-align: left;
+  border-bottom: var(--border);
+}
+
+.table th {
+  color: var(--bone-faint);
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.table td.num,
+.table th.num {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.table tr[data-empty] td {
+  color: var(--bone-faint);
+  font-style: normal;
+}
+
+/* Progress: a printed bar, no rounding, no glow. */
+.progress {
+  position: relative;
+  height: 6px;
+  background: var(--ink-well);
+  border: 1px solid var(--line);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.progress__fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width var(--dur) linear;
+}
+
+.progress__fill--ok {
+  background: var(--ok);
+}
+
+/* Tag: small printed label. */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px var(--space-2);
+  border: var(--border);
+  border-radius: var(--radius);
+  color: var(--bone-dim);
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.tag--accent {
+  border-color: var(--accent-dim);
+  color: var(--accent);
+}
+
+.tag--danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* Focus-visible helper for canvas-based controls. */
+.canvas-frame {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.canvas-frame canvas {
+  display: block;
+  touch-action: none;
+}
