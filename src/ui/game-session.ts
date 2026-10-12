@@ -10,6 +10,11 @@ import type { Settings } from '../storage/settings.ts';
 import { announce, formatNumber } from './dom.ts';
 import { PlayView } from './play-view.ts';
 
+/** Smallest board height worth laying out, so a collapsed container still yields a playable stage. */
+const MIN_BOARD_HEIGHT = 160;
+/** Gap between the board and the status-chip row it shares the grid cell with (`--space-3`). */
+const CHIP_ROW_GAP = 12;
+
 /**
  * One running game: engine, renderer, input, sound, HUD and the animation loop.
  *
@@ -65,6 +70,7 @@ export class GameSession {
   private boardChangedSentAt = 0;
   private recordBeaten = false;
   private resizeObserver: ResizeObserver | null = null;
+  private lastBoardBox: { width: number; height: number; dpr: number } | null = null;
 
   constructor(options: SessionOptions) {
     this.options = options;
@@ -98,10 +104,11 @@ export class GameSession {
     });
     this.gestureHandle = attachBoardGestures(canvas, this.router);
 
-    const host = canvas.parentElement ?? this.view.boardHost;
+    // Observe the grid cell, not the canvas frame: the frame's box is derived from the canvas,
+    // so watching it would re-run layout in response to layout's own output.
     this.resizeObserver =
       typeof ResizeObserver === 'function' ? new ResizeObserver(() => this.layout()) : null;
-    this.resizeObserver?.observe(host);
+    this.resizeObserver?.observe(this.view.boardArea);
     globalThis.addEventListener('resize', this.onWindowResize);
   }
 
@@ -370,17 +377,50 @@ export class GameSession {
 
   /** Sizes the board canvas and the piece tiles for the current container. */
   layout(): void {
-    const host = this.view.canvas.parentElement ?? this.view.boardHost;
     const dpr = Math.min(4, Math.max(1, globalThis.devicePixelRatio || 1));
-    const availableWidth = host.clientWidth || 320;
-    const availableHeight = Math.max(160, host.clientHeight || globalThis.innerHeight * 0.6);
-    this.renderer.resize(availableWidth, availableHeight, dpr, {
+    const box = this.availableBoardBox();
+    if (
+      this.lastBoardBox !== null &&
+      this.lastBoardBox.width === box.width &&
+      this.lastBoardBox.height === box.height &&
+      this.lastBoardBox.dpr === dpr
+    ) {
+      // Same offer as last time: skip the resize. Re-assigning the backing store clears the
+      // canvas, so doing it on every observer callback costs a frame of flicker for nothing.
+      this.view.layout(dpr);
+      this.renderOnce();
+      return;
+    }
+    this.lastBoardBox = { ...box, dpr };
+    this.renderer.resize(box.width, box.height, dpr, {
       cols: this.game.rules.cols,
       visibleRows: this.game.rules.rows - this.game.rules.hiddenRows,
       sliverRows: 1,
     });
     this.view.layout(dpr);
     this.renderOnce();
+  }
+
+  /**
+   * The space the board may occupy, in CSS pixels.
+   *
+   * Measured from `.play__board` — the grid cell — because that box is sized by the `.play` grid
+   * (`minmax(0, 1fr)`) and is therefore independent of the canvas. The previous measurement of the
+   * canvas's own wrapper fed the renderer its own last output: the wrapper shrink-wraps the canvas,
+   * the geometry always comes out no larger than the space offered, so every pass shrank the board
+   * until it settled on a strip derived from the canvas's default 300×150 box — a stage a fraction
+   * of the size the screen actually offers. The chip row shares the cell, so its height is reserved.
+   */
+  private availableBoardBox(): { width: number; height: number } {
+    const area = this.view.boardArea;
+    const chipsHeight = this.view.chipsRow.offsetHeight;
+    const width = area.clientWidth;
+    const height = area.clientHeight - (chipsHeight > 0 ? chipsHeight + CHIP_ROW_GAP : 0);
+    return {
+      // Fall back to a playable minimum while the screen is detached or hidden.
+      width: width > 0 ? width : 320,
+      height: Math.max(MIN_BOARD_HEIGHT, height > 0 ? height : globalThis.innerHeight * 0.6),
+    };
   }
 }
 

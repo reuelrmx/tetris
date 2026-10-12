@@ -1,5 +1,14 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  bootApp,
+  clickButton,
+  installAnimationFrameShim,
+  installCanvasStubs,
+  press,
+  screenRoot,
+  stubElementSizes,
+} from './harness.ts';
 
 /**
  * Host smoke test: the real application, mounted in a DOM.
@@ -10,128 +19,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
  * start a Marathon game, move and rotate, hard drop, pause, restart, and check that the canvas and
  * the HUD respond.
  */
-const APP_HTML = `
-  <a class="skip-link" href="#main">Skip to content</a>
-  <div class="app" id="app">
-    <header class="topbar">
-      <div class="brand"><span class="brand__mark"></span><span class="brand__name">STRATA</span>
-        <span class="brand__sub" id="topbar-mode">Falling-block puzzle</span></div>
-      <nav class="topbar__actions" aria-label="Game actions">
-        <button type="button" class="btn btn--ghost" id="btn-pause" hidden>Pause</button>
-        <button type="button" class="btn btn--ghost" id="btn-sound" aria-pressed="true">
-          <span class="sr-only">Sound: </span><span data-sound-label>on</span></button>
-        <button type="button" class="btn btn--ghost" id="btn-settings">Settings</button>
-      </nav>
-    </header>
-    <main id="main" class="main" tabindex="-1"><div id="screen-root" class="screen-root"></div></main>
-    <footer class="statusbar">
-      <span class="statusbar__item" id="status-multiplayer">Offline play ready</span>
-      <span class="statusbar__item statusbar__item--dim" id="status-build"></span>
-    </footer>
-  </div>
-  <div id="overlay-root"></div>
-  <div id="toast-root" class="toast-root" aria-live="polite"></div>
-  <div id="live-region" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
-`;
-
-interface TestHooks {
-  requestAnimationFrame(callback: FrameRequestCallback): number;
-  cancelAnimationFrame(handle: number): void;
-}
-
-function installAnimationFrameShim(): { frames: FrameRequestCallback[]; flush(count?: number): void } {
-  const frames: FrameRequestCallback[] = [];
-  const hooks = globalThis as unknown as TestHooks;
-  hooks.requestAnimationFrame = (callback: FrameRequestCallback): number => {
-    frames.push(callback);
-    return frames.length;
-  };
-  hooks.cancelAnimationFrame = (): void => undefined;
-  return {
-    frames,
-    flush(count = 1): void {
-      for (let i = 0; i < count; i++) {
-        const pending = frames.splice(0, frames.length);
-        for (const callback of pending) callback(performance.now());
-      }
-    },
-  };
-}
-
-function press(code: string, type: 'keydown' | 'keyup' = 'keydown'): void {
-  // `KeyboardEvent.code` is read-only in happy-dom, so construct the event with it directly.
-  const event = new KeyboardEvent(type, { code, bubbles: true, cancelable: true });
-  document.dispatchEvent(event);
-  (document.activeElement ?? document.body).dispatchEvent(event);
-}
-
-async function bootApp(): Promise<void> {
-  document.body.innerHTML = APP_HTML;
-  window.location.href = 'http://localhost:5173/';
-  await import('../../src/main.ts');
-  // Allow the async parts of startup (records store, stats) to settle.
-  await new Promise((resolve) => setTimeout(resolve, 0));
-  await new Promise((resolve) => setTimeout(resolve, 0));
-}
-
-function screenRoot(): HTMLElement {
-  return document.getElementById('screen-root') as HTMLElement;
-}
-
-function clickButton(label: string, root: ParentNode = document): HTMLButtonElement {
-  const buttons = Array.from(root.querySelectorAll('button'));
-  const match = buttons.find((button) => (button.textContent ?? '').trim().startsWith(label));
-  if (!match) {
-    throw new Error(`No button labelled "${label}". Found: ${buttons.map((b) => b.textContent).join(' | ')}`);
-  }
-  match.click();
-  return match;
-}
-
 describe('application boot and play loop', () => {
   let raf: ReturnType<typeof installAnimationFrameShim>;
 
   beforeEach(() => {
     vi.resetModules();
     raf = installAnimationFrameShim();
-    // happy-dom has no canvas implementation: give the renderer just enough surface to draw.
-    Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
-      configurable: true,
-      value(this: HTMLCanvasElement) {
-        const noop = (): void => undefined;
-        return {
-          canvas: this,
-          globalAlpha: 1,
-          fillStyle: '',
-          setTransform: noop,
-          clearRect: noop,
-          fillRect: noop,
-          beginPath: noop,
-          moveTo: noop,
-          lineTo: noop,
-          closePath: noop,
-          fill: noop,
-          rect: noop,
-          clip: noop,
-          save: noop,
-          restore: noop,
-          translate: noop,
-        } as unknown as CanvasRenderingContext2D;
-      },
-    });
-    Object.defineProperty(HTMLCanvasElement.prototype, 'getBoundingClientRect', {
-      configurable: true,
-      value() {
-        return { x: 0, y: 0, width: 320, height: 640, top: 0, left: 0, right: 320, bottom: 640, toJSON: () => ({}) };
-      },
-    });
-    // Layout metrics are not implemented by happy-dom; the session asks for client sizes.
-    for (const [property, value] of [
-      ['clientWidth', 320],
-      ['clientHeight', 640],
-    ] as const) {
-      Object.defineProperty(HTMLElement.prototype, property, { configurable: true, get: () => value });
-    }
+    installCanvasStubs();
+    // Layout metrics are not implemented by happy-dom; the session asks for client sizes. Every
+    // element reports the same box here — `play-layout.test.ts` is the suite that models a real
+    // one, where the canvas wrapper shrink-wraps the canvas it contains.
+    stubElementSizes(() => ({ width: 320, height: 640 }));
   });
 
   afterEach(() => {

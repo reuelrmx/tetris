@@ -174,10 +174,18 @@
   justify-content: flex-start;
 }
 
+/*
+ * The board cell. A column so the status chips sit *below* the stage instead of beside it: in a
+ * row they competed with the canvas for width, and because the chips come and go (combo, b2b,
+ * incoming garbage) the board's offer changed mid-game. The gap matches `CHIP_ROW_GAP` in
+ * `src/ui/game-session.ts`, which reserves this row when it measures the space for the canvas.
+ */
 .play__board {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: var(--space-3);
   min-height: 0;
   min-width: 0;
 }
