@@ -133,11 +133,29 @@ export function boardSize(layout: BoardLayout): BoardGeometry {
   };
 }
 
-/** Converts a scene row (0 = first sliver row) into a y coordinate. */
+/**
+ * Converts a scene row (0 = first sliver row) into a y offset measured from the top of the board
+ * *content* — the spawn band, i.e. `geometry.bandY`. It already includes the band height for rows
+ * inside the well, so it must not be combined with `geometry.frameY`, which counts the band a
+ * second time; use `rowToBoardY` for absolute placement.
+ */
 export function rowToY(layout: BoardLayout, row: number): number {
   const fieldTop = layout.sliverRows * layout.sliverHeight;
   if (row < layout.sliverRows) return row * layout.sliverHeight;
   return fieldTop + (row - layout.sliverRows) * layout.cell;
+}
+
+/**
+ * Absolute y of a scene row's top edge inside the board.
+ *
+ * `rowToY` is relative to the top of the content (the band) while `frameY` is the top of the well
+ * and therefore already includes the band's height. Anchoring rows at `frameY + rowToY(...)`
+ * double-counts that band and shifts the whole stack down by one band height — with the default
+ * 0.45 sliver the bottom row loses 45% of its height to the clip and reads as sinking into the
+ * stage. Everything that places a row goes through this helper so the anchor stays single-sourced.
+ */
+export function rowToBoardY(geometry: BoardGeometry, layout: BoardLayout, row: number): number {
+  return geometry.bandY + rowToY(layout, row);
 }
 
 // ---------------------------------------------------------------- primitives
@@ -350,7 +368,7 @@ function drawSceneCell(
     return;
   }
   const isGarbage = options.code === CELL_GARBAGE;
-  drawBlock(target, x, frameY + rowToY(layout, sceneRow), layout.cell, options.color, metrics, {
+  drawBlock(target, x, rowToBoardY(geometry, layout, sceneRow), layout.cell, options.color, metrics, {
     glyph: options.glyph,
     alpha: options.alpha ?? (isGarbage ? 0.95 : 1),
   });
@@ -373,7 +391,7 @@ export function paintBoardContents(target: DrawTarget, scene: BoardScene, option
       const glyph = scene.theme.glyphs ? (pieceForCellCode(code) ?? undefined) : undefined;
       if (clearing.has(row)) {
         // Cleared rows flash towards bone and shrink slightly as they collapse.
-        const y = size.frameY + rowToY(layout, row);
+        const y = rowToBoardY(size, layout, row);
         const flash = Math.max(0, 1 - scene.clearProgress);
         const scale = 1 - scene.clearProgress * 0.35;
         const shrink = (layout.cell - layout.cell * scale) / 2;
@@ -392,8 +410,8 @@ export function paintBoardContents(target: DrawTarget, scene: BoardScene, option
 
   // Drop streak: a restrained motion cue from where a hard drop started.
   if (scene.dropStreak) {
-    const fromY = size.frameY + rowToY(layout, scene.dropStreak.fromY);
-    const toY = size.frameY + rowToY(layout, scene.dropStreak.toY);
+    const fromY = rowToBoardY(size, layout, scene.dropStreak.fromY);
+    const toY = rowToBoardY(size, layout, scene.dropStreak.toY);
     const x = size.frameX + scene.dropStreak.x * layout.cell;
     const streakColor = scene.activeId ? pieceColor(scene.activeId) : palette.bone;
     for (let i = 0; i < 4; i++) {
@@ -414,7 +432,7 @@ export function paintBoardContents(target: DrawTarget, scene: BoardScene, option
     for (const cell of scene.ghostCells) {
       if (cell.y < layout.sliverRows) continue;
       const x = size.frameX + cell.x * layout.cell;
-      const y = size.frameY + rowToY(layout, cell.y);
+      const y = rowToBoardY(size, layout, cell.y);
       drawGhostBlock(target, x, y, layout.cell, color);
     }
   }

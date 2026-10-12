@@ -43,6 +43,12 @@ export class PlayView {
   readonly element: HTMLElement;
   readonly canvas: HTMLCanvasElement;
   readonly boardHost: HTMLElement;
+  /**
+   * The grid cell that offers space to the board. Its size comes from the `.play` grid
+   * (`minmax(0, 1fr)`) rather than from the canvas, which is what makes it safe to measure:
+   * `boardHost` wraps the canvas and shrink-wraps to whatever the canvas was last sized to.
+   */
+  readonly boardArea: HTMLElement;
   readonly touchPad: HTMLElement;
   readonly pauseButton: HTMLButtonElement;
 
@@ -163,6 +169,7 @@ export class PlayView {
 
     this.chips = el('div', { class: 'status-chips' });
     const boardColumn = el('div', { class: 'play__board' }, [this.boardHost, this.chips]);
+    this.boardArea = boardColumn;
 
     // Compact strip for small screens.
     this.stripScore = el('span', { class: 'num', text: '0' });
@@ -207,6 +214,11 @@ export class PlayView {
 
   get firstFocus(): HTMLElement {
     return this.canvas;
+  }
+
+  /** The status-chip row, exposed so the session can reserve its height when sizing the board. */
+  get chipsRow(): HTMLElement {
+    return this.chips;
   }
 
   /** Sizes the piece tiles to the space their rails give them. */
